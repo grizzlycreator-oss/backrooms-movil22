@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1c180c">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon192.png">
+<link rel="icon" href="assets/icon192.png">
+<title>Backrooms Móvil 22</title>
+<style>
+  :root { --amber: #e9d58a; --dim: #b3a46a; --bg: #1c180c; --panel: rgba(18, 15, 8, 0.82); --red: #d8402a; --green: #6cf07a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; font-family: "Courier New", Courier, monospace; color: var(--amber); }
+  #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .layer { position: fixed; inset: 0; pointer-events: none; }
+  #vig { background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.85) 120%); }
+  #hurt { background: radial-gradient(ellipse at center, rgba(150,0,0,0) 25%, rgba(150,0,0,0.95) 115%); opacity: 0; }
+  #grain { background-image: url(assets/tex/grain.png); opacity: 0.07; mix-blend-mode: overlay; }
+  #dark { background: #000; opacity: 0; }
+  #scope { display: none; background: radial-gradient(circle at center, rgba(0,0,0,0) 0, rgba(0,0,0,0) min(42vh,42vw), #000 calc(min(42vh,42vw) + 3px)); }
+  #scope::before, #scope::after { content: ""; position: absolute; left: 50%; top: 50%; background: #000; }
+  #scope::before { width: 2px; height: min(84vh,84vw); transform: translate(-50%,-50%); }
+  #scope::after { height: 2px; width: min(84vh,84vw); transform: translate(-50%,-50%); }
+  #tags { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .tag { position: absolute; left: 0; top: 0; font-size: 12px; color: #f2ecc8; text-shadow: 0 0 3px #000, 0 0 2px #000; white-space: nowrap; text-align: center; }
+  #hud { position: fixed; inset: 0; pointer-events: none; padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); text-shadow: 0 0 4px #000, 0 1px 2px #000; }
+  #topl { position: absolute; left: max(14px, env(safe-area-inset-left)); top: max(8px, env(safe-area-inset-top)); font-size: 12px; line-height: 1.45; max-width: 58vw; }
+  #obj { color: #ffe066; font-weight: bold; }
+  #players { position: absolute; right: calc(max(14px, env(safe-area-inset-right)) + 48px); top: max(8px, env(safe-area-inset-top)); font-size: 12px; text-align: right; line-height: 1.4; }
+  #arrowbox { position: absolute; left: 50%; top: max(44px, calc(env(safe-area-inset-top) + 36px)); transform: translateX(-50%); text-align: center; display: none; }
+  #arrow { width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-bottom: 22px solid var(--green); margin: 0 auto 2px; transform-origin: 50% 60%; filter: drop-shadow(0 0 3px #000); }
+  #arrowt { font-size: 12px; font-weight: bold; }
+  #msg { position: absolute; left: 50%; top: 33%; transform: translateX(-50%); font-size: 18px; text-align: center; width: 90vw; transition: opacity 0.4s; }
+  #center { position: absolute; left: 50%; top: 44%; transform: translate(-50%,-50%); font-size: 26px; color: var(--red); text-align: center; font-weight: bold; white-space: pre-line; }
+  #title { position: absolute; left: 50%; top: 42%; transform: translate(-50%,-50%); font-size: 30px; color: #f3ead0; text-align: center; white-space: pre-line; letter-spacing: 1px; }
+  #radio { position: absolute; left: 50%; top: 21%; transform: translateX(-50%); font-size: 14px; text-align: center; width: 80vw; background: rgba(0,0,0,0.45); padding: 4px 8px; border-radius: 3px; display: none; }
+  #prompt { position: absolute; left: 50%; bottom: 40%; transform: translateX(-50%); font-size: 14px; text-align: center; color: #fff6c8; }
+  #prog { position: absolute; left: 50%; bottom: calc(40% - 12px); width: 160px; height: 6px; transform: translateX(-50%); background: rgba(0,0,0,0.6); display: none; }
+  #prog > div { height: 100%; width: 0; background: #ffd34d; }
+  #cross { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; background: rgba(255,255,255,0.8); border-radius: 50%; }
+  #cross i { position: absolute; background: rgba(255,255,255,0.55); }
+  #bl { position: absolute; left: max(14px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom)); font-size: 11px; width: 150px; display: none; }
+  .bar { height: 7px; background: rgba(0,0,0,0.5); margin-top: 3px; }
+  .bar > div { height: 100%; background: #d9cc98; }
+  #br { position: absolute; right: max(14px, env(safe-area-inset-right)); top: calc(max(8px, env(safe-area-inset-top)) + 44px); text-align: right; font-size: 11px; }
+  #ammo { font-size: 24px; font-weight: bold; color: #efe4b8; }
+  #state { color: #ffb070; }
+  #mic { font-size: 11px; color: #9ff09f; margin-bottom: 2px; }
+  /* controles táctiles */
+  #touch { position: fixed; inset: 0; display: none; }
+  #lzone { position: absolute; left: 0; top: 0; bottom: 0; width: 45%; }
+  #rzone { position: absolute; right: 0; top: 0; bottom: 0; width: 55%; }
+  #stick { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(233,213,138,0.35); background: rgba(0,0,0,0.15); display: none; pointer-events: none; }
+  #knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px; border-radius: 50%; background: rgba(233,213,138,0.35); }
+  .tb { position: absolute; border-radius: 50%; border: 2px solid rgba(233,213,138,0.5); background: rgba(20,16,8,0.45); color: var(--amber); font: bold 11px "Courier New", monospace; display: flex; align-items: center; justify-content: center; text-align: center; touch-action: none; }
+  .tb.on { background: rgba(233,213,138,0.4); color: #000; }
+  #b_fire { width: 92px; height: 92px; right: calc(max(18px, env(safe-area-inset-right)) + 10px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 30px); font-size: 13px; border-color: rgba(230,90,60,0.8); }
+  #b_aim { width: 54px; height: 54px; right: calc(max(18px, env(safe-area-inset-right)) + 118px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 92px); }
+  #b_reload { width: 54px; height: 54px; right: calc(max(18px, env(safe-area-inset-right)) + 118px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 26px); }
+  #b_use { width: 60px; height: 60px; right: calc(max(18px, env(safe-area-inset-right)) + 30px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 136px); }
+  #b_flare { width: 48px; height: 48px; right: calc(max(18px, env(safe-area-inset-right)) + 182px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 30px); }
+  #b_swap { width: 48px; height: 48px; right: calc(max(18px, env(safe-area-inset-right)) + 182px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 88px); }
+  #b_light { width: 44px; height: 44px; left: calc(max(14px, env(safe-area-inset-left)) + 168px); bottom: calc(max(10px, env(safe-area-inset-bottom)) + 4px); }
+  #b_radio { width: 50px; height: 50px; left: calc(max(14px, env(safe-area-inset-left)) + 220px); bottom: calc(max(10px, env(safe-area-inset-bottom)) + 2px); }
+  #b_mute { width: 40px; height: 40px; left: calc(max(14px, env(safe-area-inset-left)) + 278px); bottom: calc(max(10px, env(safe-area-inset-bottom)) + 6px); font-size: 9px; }
+  #b_insp { width: 40px; height: 40px; right: calc(max(18px, env(safe-area-inset-right)) + 240px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 34px); font-size: 9px; }
+  #b_pause { width: 40px; height: 40px; right: max(14px, env(safe-area-inset-right)); top: max(8px, env(safe-area-inset-top)); font-size: 16px; pointer-events: auto; }
+  /* pantallas */
+  .screen { position: fixed; inset: 0; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); touch-action: pan-y; }
+  #menu { background: repeating-linear-gradient(90deg, #1c180c 0 46px, #221d0f 46px 48px); }
+  .wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+  h1 { margin: 6px 0 0; font-size: clamp(30px, 7vw, 52px); text-align: center; letter-spacing: 3px; color: #efdc92; text-shadow: 0 0 18px rgba(233,213,138,0.35); }
+  h2 { margin: 0; text-align: center; color: #8db3ff; font-size: 18px; letter-spacing: 6px; }
+  .sub { text-align: center; color: var(--dim); font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row > * { flex: 1 1 0; min-width: 0; }
+  label.l { flex: 0 0 auto; font-size: 13px; color: var(--dim); }
+  button.b, input.i { font: bold 14px "Courier New", monospace; padding: 11px 10px; border: 1px solid #6b5d2c; background: #3d3416; color: #f0e2a8; border-radius: 3px; }
+  button.b:active { background: #6b5d2c; }
+  button.b.sel { background: #8a7428; color: #fff; border-color: #e9d58a; }
+  button.b.red { background: #4d1a12; border-color: #8a2a1c; }
+  input.i { background: #120f07; -webkit-user-select: text; user-select: text; }
+  .desc { font-size: 12px; color: #d8cb98; text-align: center; min-height: 32px; }
+  .hint { font-size: 11px; color: #8d8158; text-align: center; line-height: 1.5; }
+  #status { text-align: center; color: #ffb070; font-size: 13px; min-height: 18px; }
+  #roomcode { font-size: 34px; letter-spacing: 8px; text-align: center; color: #fff; }
+  #loading { background: #000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; text-align: center; }
+  #lbar { width: 220px; height: 6px; background: #222; } #lbar > div { height: 100%; width: 0; background: var(--amber); }
+  #pause, #end { background: rgba(0,0,0,0.78); }
+  #note { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); width: min(560px, 92vw); max-height: 80vh; overflow: auto; background: #e0d6b8; color: #2a2014; padding: 18px 20px; display: none; box-shadow: 0 0 40px #000; pointer-events: auto; font-size: 14px; white-space: pre-line; }
+  #note h3 { margin: 0 0 10px; font-size: 17px; }
+  #endtext { font-size: 18px; text-align: center; color: #eee3c4; min-height: 80px; margin-top: 25vh; line-height: 1.5; padding: 0 8vw; }
+  #rotate { position: fixed; inset: 0; background: #000; display: none; align-items: center; justify-content: center; text-align: center; font-size: 18px; z-index: 99; padding: 20px; }
+  @media (orientation: portrait) and (pointer: coarse) { body.playing #rotate { display: flex; } }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="layer" id="vig"></div>
+<div class="layer" id="grain"></div>
+<div class="layer" id="hurt"></div>
+<div class="layer" id="scope"></div>
+<div id="tags"></div>
+<div class="layer" id="dark"></div>
+
+<div id="hud" style="display:none">
+  <div id="topl"><div id="wave"></div><div id="obj"></div></div>
+  <div id="players"></div>
+  <div id="arrowbox"><div id="arrow"></div><div id="arrowt"></div></div>
+  <div id="cross"><i style="left:-14px;top:1px;width:9px;height:2px"></i><i style="left:9px;top:1px;width:9px;height:2px"></i><i style="top:-14px;left:1px;width:2px;height:9px"></i><i style="top:9px;left:1px;width:2px;height:9px"></i></div>
+  <div id="msg"></div>
+  <div id="title"></div>
+  <div id="center"></div>
+  <div id="radio"></div>
+  <div id="prompt"></div>
+  <div id="prog"><div></div></div>
+  <div id="bl"><div id="mic"></div><div id="role"></div><div class="bar"><div id="hpbar"></div></div><div class="bar" style="height:3px"><div id="stbar" style="background:#9fb0c0"></div></div><div class="bar" style="height:3px"><div id="batbar" style="background:#f0d860"></div></div></div>
+  <div id="br"><div id="ammo"></div><div id="wname"></div><div id="state"></div></div>
+</div>
+
+<div id="touch">
+  <div id="lzone"></div><div id="rzone"></div>
+  <div id="stick"><div id="knob"></div></div>
+  <div class="tb" id="b_fire">FUEGO</div>
+  <div class="tb" id="b_aim">MIRA</div>
+  <div class="tb" id="b_reload">REC</div>
+  <div class="tb" id="b_use">USAR</div>
+  <div class="tb" id="b_flare">BENG</div>
+  <div class="tb" id="b_swap">ARMA</div>
+  <div class="tb" id="b_light">LUZ</div>
+  <div class="tb" id="b_radio">RADIO</div>
+  <div class="tb" id="b_mute">MIC</div>
+  <div class="tb" id="b_insp">VER</div>
+</div>
+<div class="tb" id="b_pause" style="display:none">II</div>
+<div id="note"><h3 id="notet"></h3><div id="noteb"></div><p style="text-align:right;margin:12px 0 0;font-size:12px">(tocá para cerrar)</p></div>
+
+<div class="screen" id="menu">
+  <div class="wrap">
+    <h1>THE BACKROOMS</h1>
+    <h2>MÓVIL 22</h2>
+    <div class="sub">Cuatro policías. Un llamado de rutina. Treinta años perdidos en los Backrooms.</div>
+    <div class="row"><label class="l">Tu nombre</label><input class="i" id="name" maxlength="14"></div>
+    <div class="row"><button class="b" id="mode"></button><button class="b" id="lvl"></button></div>
+    <div class="desc" id="lvldesc"></div>
+    <div class="row" id="roles"></div>
+    <div class="desc" id="roledesc"></div>
+    <button class="b" id="solo">JUGAR SOLO</button>
+    <button class="b" id="host">CREAR SALA (multijugador)</button>
+    <div class="row"><input class="i" id="code" maxlength="5" placeholder="CÓDIGO (ej: KQZT0)" style="text-transform:uppercase"><button class="b" id="join" style="flex:0 0 auto">UNIRSE</button></div>
+    <div id="status"></div>
+    <div class="hint">Celular: joystick a la izquierda, deslizá a la derecha para mirar. Usá auriculares para el chat de voz.<br>PC: WASD · ratón · clic · R · Q arma · G bengala · E usar · F luz · V ver · B radio · M mic · Tab · Esc</div>
+  </div>
+</div>
+
+<div class="screen" id="lobby" style="background:#000">
+  <div class="wrap" style="margin-top:12vh">
+    <h2>SALA CREADA</h2>
+    <div class="sub">Pasales este código a tus amigos (en Android o iPhone):</div>
+    <div id="roomcode"></div>
+    <div class="sub" id="lobbyp">Esperando jugadores...</div>
+    <button class="b" id="startgame">EMPEZAR</button>
+  </div>
+</div>
+
+<div class="screen" id="loading"><div id="ltext">Entrando a los Backrooms...</div><div id="lbar"><div></div></div></div>
+
+<div class="screen" id="pause">
+  <div class="wrap" style="margin-top:8vh">
+    <h1 style="font-size:36px">PAUSA</h1>
+    <div class="sub" id="pinfo"></div>
+    <div class="row"><label class="l">Sensibilidad</label><input type="range" id="sens" min="0.3" max="3" step="0.1" value="1.2"></div>
+    <div class="row"><label class="l">Gráficos</label><button class="b" id="gfxq"></button></div>
+    <button class="b" id="resume">SEGUIR</button>
+    <button class="b red" id="quit">SALIR AL MENÚ</button>
+  </div>
+</div>
+
+<div class="screen" id="end" style="background:#000">
+  <div id="endtext"></div>
+  <div class="wrap" id="endbtns" style="display:none;margin-top:4vh">
+    <h1 style="font-size:32px">FIN DEL CAPÍTULO 1</h1>
+    <button class="b" id="cont">SEGUIR JUGANDO (supervivencia)</button>
+    <button class="b red" id="quit2">SALIR AL MENÚ</button>
+  </div>
+</div>
+<div id="rotate">Girá el celular para jugar 📱↻</div>
+
+<script src="js/data.js"></script>
+<script src="js/world.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/gfx.js"></script>
+<script src="js/models.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/net.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/views.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

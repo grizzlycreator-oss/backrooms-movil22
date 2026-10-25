@@ -1,0 +1,13 @@
+{
+  "name": "The Backrooms - Móvil 22",
+  "short_name": "Backrooms 22",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#000000",
+  "theme_color": "#1c180c",
+  "icons": [
+    { "src": "assets/icon192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
