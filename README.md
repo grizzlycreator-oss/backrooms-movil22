@@ -9,6 +9,9 @@ Android y iPhone, chat de voz por cercanía y radio, y un doppelgänger que imit
 - **Android:** descargá el APK de la última versión →
   [Backrooms-Movil22.apk](../../releases/latest/download/Backrooms-Movil22.apk)
   (la primera vez Android pide permitir "instalar apps de origen desconocido").
+- **PC (Windows):** [Backrooms-Movil22.exe](../../releases/latest/download/Backrooms-Movil22.exe)
+  — doble clic y juega, no se instala nada. Si Windows muestra "Windows protegió su PC",
+  tocá *Más información → Ejecutar de todas formas* (pasa con cualquier programa sin firma paga).
 - **iPhone:** abrí la página del juego en Safari (ver *Settings → Pages* del repositorio),
   tocá Compartir → **Agregar a pantalla de inicio**. Queda como app a pantalla completa.
 

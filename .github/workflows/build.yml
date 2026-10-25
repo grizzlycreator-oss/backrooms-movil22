@@ -51,9 +51,40 @@ jobs:
           name: Backrooms Móvil 22 (versión ${{ github.run_number }})
           make_latest: true
           body: |
-            Descargá **Backrooms-Movil22.apk** desde el celular Android e instalalo.
+            **Android:** descargá Backrooms-Movil22.apk desde el celular e instalalo.
+            **PC (Windows):** descargá Backrooms-Movil22.exe y abrilo con doble clic.
             iPhone: jugá desde la página del juego y agregala a la pantalla de inicio.
           files: Backrooms-Movil22.apk
+
+  exe:
+    name: Versión PC (Windows)
+    needs: apk
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Copiar el juego
+        shell: bash
+        run: |
+          rm -rf desktop/www
+          cp -r www desktop/www
+
+      - name: Compilar .exe
+        working-directory: desktop
+        shell: bash
+        run: |
+          npm install --no-audit --no-fund
+          npx electron-builder --win portable --publish never
+
+      - name: Publicar descarga
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          files: desktop/dist/Backrooms-Movil22.exe
 
   web:
     name: Página para iPhone

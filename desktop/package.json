@@ -1,0 +1,20 @@
+{
+  "name": "backrooms-movil22",
+  "version": "1.0.0",
+  "description": "The Backrooms - Movil 22",
+  "author": "grizzlycreator-oss",
+  "main": "main.js",
+  "private": true,
+  "scripts": { "start": "electron ." },
+  "devDependencies": {
+    "electron": "30.5.1",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.movil22.backrooms",
+    "productName": "Backrooms Movil22",
+    "files": ["main.js", "www/**/*"],
+    "win": { "target": "portable", "icon": "icon.png" },
+    "portable": { "artifactName": "Backrooms-Movil22.exe" }
+  }
+}
