@@ -325,7 +325,10 @@ var GFX = (function () {
     drawList.forEach(drawItem);
     transList.sort(function (a, b) { return b.d - a.d; });
     transList.forEach(function (it) { setBlend(it.n.blend); drawItem(it); });
-    // arma en primera persona: encima de todo
+    // arma en primera persona: encima de todo (hay que reactivar la escritura de profundidad
+    // antes de limpiarla, si no el clear no hace nada y el arma se corta contra las paredes)
+    setBlend(0);
+    gl.depthMask(true);
     gl.clear(gl.DEPTH_BUFFER_BIT);
     var proj2 = persp(new Float32Array(16), 66, aspect, 0.01, 10);
     var vp2 = mul(new Float32Array(16), proj2, view);

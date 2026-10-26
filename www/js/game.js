@@ -34,6 +34,22 @@ INPUT.took = function (k) { var v = !!INPUT.presses[k]; INPUT.presses[k] = false
     upd();
   });
   window.addEventListener("keyup", function (e) { keys[e.code] = false; upd(); });
+  // si la ventana pierde el foco (Alt+Tab, tecla Windows, clic afuera) se sueltan todas las teclas
+  function soltarTodo() {
+    for (var k in keys) keys[k] = false;
+    upd();
+    INPUT.fire = false; INPUT.aim = false; INPUT.lookX = 0; INPUT.lookY = 0;
+  }
+  INPUT.releaseAll = soltarTodo;
+  window.addEventListener("blur", soltarTodo);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) soltarTodo(); });
+  document.addEventListener("pointerlockchange", function () {
+    if (document.pointerLockElement !== cv) {
+      soltarTodo();
+      // Esc libera el mouse: abrimos la pausa para que el juego no siga con controles a medias
+      if (G && G.ready && !INPUT.touch && !G.paused && !G.ending) G.togglePause();
+    }
+  });
   function upd() {
     if (INPUT.touch) return;
     INPUT.mz = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
@@ -44,14 +60,27 @@ INPUT.took = function (k) { var v = !!INPUT.presses[k]; INPUT.presses[k] = false
   var cv = $("cv");
   cv.addEventListener("mousedown", function (e) {
     if (INPUT.touch || !G || !G.ready) return;
-    if (document.pointerLockElement !== cv) { cv.requestPointerLock && cv.requestPointerLock(); return; }
+    if (document.pointerLockElement !== cv) { INPUT.lock(); return; }
     if (e.button === 0) INPUT.fire = true;
     if (e.button === 2) INPUT.aim = true;
   });
   window.addEventListener("mouseup", function (e) { if (e.button === 0) INPUT.fire = false; if (e.button === 2) INPUT.aim = false; });
   window.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  INPUT.lock = function () {
+    if (!cv.requestPointerLock) return;
+    // movimiento "en crudo" (sin la aceleración de Windows); si no se puede, el normal
+    try {
+      var r = cv.requestPointerLock({ unadjustedMovement: true });
+      if (r && r.catch) r.catch(function () { try { cv.requestPointerLock(); } catch (e) { } });
+    } catch (e) { try { cv.requestPointerLock(); } catch (e2) { } }
+    INPUT.lockedAt = performance.now();
+  };
   window.addEventListener("mousemove", function (e) {
-    if (document.pointerLockElement === cv) { INPUT.lookX += e.movementX * 0.1; INPUT.lookY += e.movementY * 0.1; }
+    if (document.pointerLockElement !== cv) return;
+    // Chrome a veces manda un salto enorme justo al capturar el mouse: se ignora
+    if (performance.now() - (INPUT.lockedAt || 0) < 120) return;
+    if (Math.abs(e.movementX) > 300 || Math.abs(e.movementY) > 300) return;
+    INPUT.lookX += e.movementX * 0.1; INPUT.lookY += e.movementY * 0.1;
   });
   window.addEventListener("wheel", function () { INPUT.press("swap"); });
 
@@ -151,7 +180,7 @@ function Game(o) {
   this.disconnected = false; this.paused = false; this.px = 0; this.pz = 0; this.scoped = false; this.fov = BASE_FOV;
   this.inspectT = 0; this.drawT = 0; this.anim = {}; this.nerv = 0; this.holdT = 0; this.holdKey = null; this.noteOpen = null;
   this.notesRead = {}; this.phantomT = rnd(60, 110); this.sparkT = rnd(5, 12); this.steamT = 3; this.phoneT = 5; this.danger = 0;
-  this.msgT = 0; this.fade = 0; this.headY = 1.62; this.roll = 0; this.lastSync = 0; this.micLevel = 0;
+  this.msgT = 0; this.fade = 0; this.wallPush = 0; this.headY = 1.62; this.roll = 0; this.lastSync = 0; this.micLevel = 0;
   this.fx = new FX();
   // arma
   var sleeve = this.rc.key === "detective" ? [0.42, 0.32, 0.2] : ROLE_OUTFIT[this.rc.key].shirt;
@@ -351,6 +380,8 @@ Game.prototype.camVecs = function () {
 Game.prototype.togglePause = function () {
   if (this.ending) return;
   this.paused = !this.paused;
+  INPUT.releaseAll && INPUT.releaseAll();
+  if (!this.paused && !INPUT.touch) INPUT.lock();
   $("pause").style.display = this.paused ? "block" : "none";
   if (this.paused && document.exitPointerLock) document.exitPointerLock();
   var tt = levelTitle(this.level);
@@ -922,6 +953,7 @@ Game.prototype.update = function (dt) {
   this.exitOpen = !!this.info.ex;
   if (this.door) { this.door.setOpen(this.exitOpen); this.door.update(dt); }
   if (!this.paused && !this.transit) { this.handleInput(); this.updatePlayer(dt); this.updateInteract(dt); }
+  else { INPUT.lookX = INPUT.lookY = 0; }
   this.updateWeapon(dt);
   for (var mid in this.monsters) this.monsters[mid].update(dt);
   for (var aid in this.avatars) this.avatars[aid].update(dt);
@@ -1064,6 +1096,20 @@ Game.prototype.updateWeapon = function (dt) {
   if (this.inspectT > 0 && this.cur !== "knife") {
     var s_ = Math.sin((1 - this.inspectT / 1.8) * Math.PI);
     this.vm.ry -= 55 * s_; this.vm.rz += 25 * s_; this.vm.x -= 0.05 * s_; this.vm.z -= 0.05 * s_;
+  }
+  // cerca de una pared el personaje baja y recoge el arma (no la atraviesa)
+  var cv = this.camVecs(), wt = this.world.raycast3d(cv.eye, cv.fwd, 3)[0];
+  var reach = 0.95 + (this.cur === "rifle" ? 0.35 : this.cur === "shotgun" ? 0.25 : 0);
+  var near = Math.max(0, Math.min(1, (reach - wt) / 0.65));
+  for (var aid in this.avatars) {
+    var av = this.avatars[aid], adx = av.x - this.px, adz = av.z - this.pz, ad = hyp(adx, adz);
+    if (av.alive && ad < reach + 0.3 && (adx * cv.fwd[0] + adz * cv.fwd[2]) / Math.max(ad, 0.01) > 0.8) near = Math.max(near, (reach + 0.3 - ad) / 0.65);
+  }
+  this.wallPush += (Math.min(1, near) - this.wallPush) * Math.min(1, dt * 10);
+  var wp = this.wallPush;
+  if (wp > 0.01) {
+    this.vm.z -= 0.06 * wp; this.vm.y -= 0.03 * wp;
+    this.vm.rx += 26 * wp; this.vm.rz += 6 * wp;
   }
   this.vm.visible = this.alive && !this.transit && !scopedView;
   this.vm.tint = this.lightAt(this.px, this.pz) * 0.55 + 0.12;

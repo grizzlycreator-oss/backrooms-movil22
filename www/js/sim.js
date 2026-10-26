@@ -290,7 +290,7 @@ HostSim.prototype.update = function (dt, players) {
     var kk = Math.min(1, dt * 6);
     m.vx += (dx * speed - m.vx) * kk; m.vz += (dz * speed - m.vz) * kk;
     var ox = m.x, oz = m.z;
-    var np = w.collide(m.x + m.vx * dt, m.z + m.vz * dt, MONSTER_R);
+    var np = w.collide(m.x + m.vx * dt, m.z + m.vz * dt, m.kind === 1 ? 0.4 : 0.52);   // más aire contra las paredes para los brazos
     m.x = np[0]; m.z = np[1];
     var moved = Math.hypot(m.x - ox, m.z - oz);
     if (speed > 1 && moved < speed * dt * 0.2) {

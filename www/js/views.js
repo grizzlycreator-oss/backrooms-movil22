@@ -102,14 +102,17 @@ MonsterView.prototype.update = function (dt) {
   this.flinch = Math.max(0, this.flinch - dt * 4);
   this.torso.rx = lean - this.flinch * 30;
   this.torso.y = 1.15 + Math.abs(Math.cos(this.phase)) * 0.05 * amp;
+  // espacio libre adelante (para que los brazos no atraviesen paredes)
+  var D = Math.PI / 180, fr = this.g.world.raycast2d(r.x, r.z, Math.sin(r.ry * D), Math.cos(r.ry * D), 2)[0];
+  var room = Math.max(0.25, Math.min(1, (fr - 0.35) / 1.1));
   if (this.swing > 0) {
     this.swing -= dt;
     var u = 1 - Math.max(this.swing, 0) / 0.5;
-    var ang = u < 0.6 ? -150 * Math.sin(u * Math.PI * 0.6) : -150 + (u - 0.6) / 0.4 * 170;
+    var ang = (u < 0.6 ? -150 * Math.sin(u * Math.PI * 0.6) : -150 + (u - 0.6) / 0.4 * 170) * room;
     this.arms.forEach(function (a) { a.rx = ang; });
   } else {
-    var b = this.state === 1 ? -25 * amp : 0;
-    this.arms[0].rx = b - sw * 22 * amp; this.arms[1].rx = b + sw * 22 * amp;
+    var b = (this.state === 1 ? -25 * amp : 0) * room;
+    this.arms[0].rx = b - sw * 22 * amp * room; this.arms[1].rx = b + sw * 22 * amp * room;
     this.arms[0].rz = -6; this.arms[1].rz = 6;
   }
   this.twitch -= dt;
@@ -147,7 +150,10 @@ AvatarView.prototype.update = function (dt) {
   this.phase += dt * (2 + this.speed * 2.4);
   var amp = Math.min(1, this.speed / 3), ph = this.phase;
   this.m.legs.forEach(function (l, i) { l.rx = Math.sin(ph) * 30 * amp * (i ? 1 : -1); });
-  this.m.arms.forEach(function (a, i) { a.rx = -60 + (i === 0 ? Math.sin(ph) * 8 * amp : 0); });
+  var D = Math.PI / 180, fr = this.g.world.raycast2d(r.x, r.z, Math.sin(r.ry * D), Math.cos(r.ry * D), 1.5)[0];
+  var low = Math.max(0, Math.min(1, (1.15 - fr) / 0.7));
+  this.m.arms.forEach(function (a, i) { a.rx = -60 + 45 * low + (i === 0 ? Math.sin(ph) * 8 * amp : 0); });
+  this.m.gun.rx += 45 * low;
   r.visible = this.alive;
   this.m.pile.visible = !this.alive;
   if (!this.alive) { this.m.pile.x = r.x; this.m.pile.z = r.z; }
