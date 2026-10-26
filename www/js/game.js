@@ -3,7 +3,7 @@
 
 var $ = function (id) { return document.getElementById(id); };
 var ROLE_KEYS = DATA.ROLES.map(function (r) { return r.key; });
-var BASE_FOV = 78;
+var BASE_FOV = 90;   // horizontal
 var PROTO = 3;
 function roleKey(i) { return ROLE_KEYS[(+i || 0) % 4] || ROLE_KEYS[0]; }
 function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -484,7 +484,7 @@ Game.prototype.fire = function () {
   else if (this.cur === "revolver") this.anim.cyl = 0.001;
   var cv = this.camVecs(), o = cv.eye, f = cv.fwd, r = cv.right, u = cv.up;
   var spread = w.spread;
-  if (w.scope) spread = (this.scoped && this.fov < 40) ? w.zspread : w.spread;
+  if (w.scope) spread = (this.scoped && this.fov < 45) ? w.zspread : w.spread;
   if (this.rc.key === "novato") spread += 0.035 * this.nerv;
   var dmgBy = {}, heads = false;
   for (var k = 0; k < w.pellets; k++) {
@@ -1047,9 +1047,9 @@ Game.prototype.updateWeapon = function (dt) {
     }
   }
   if (this.muzzleT > 0) { this.muzzleT -= dt; if (this.muzzleT <= 0 && vmo.muzzle) vmo.muzzle.visible = false; }
-  var tf = (this.scoped && this.alive) ? 22 : BASE_FOV;
+  var tf = (this.scoped && this.alive) ? 26 : BASE_FOV;
   this.fov += (tf - this.fov) * Math.min(1, dt * 12);
-  var scopedView = this.fov < 35;
+  var scopedView = this.fov < 40;
   $("scope").style.display = scopedView ? "block" : "none";
   this.vmKick = Math.max(0, this.vmKick - dt * 5);
   var k = this.vmKick, sp = hyp(this.vx, this.vz);
@@ -1286,7 +1286,7 @@ Game.prototype.updateHud = function (dt) {
   }
   $("mic").textContent = mic;
   $("b_mute").classList.toggle("on", !!VOICE.muted);
-  $("cross").style.display = (this.fov < 35 || this.cur === "glock") ? "none" : "block";
+  $("cross").style.display = (this.fov < 40 || this.cur === "glock") ? "none" : "block";
   var spread = (w.spread || 0.01) * 0.5 + 0.008 + hyp(this.vx, this.vz) * 0.003 + this.recoil * 0.004 + this.nerv * 0.02;
   var px = Math.round(spread * 600);
   var is = $("cross").children;

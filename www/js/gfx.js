@@ -150,7 +150,7 @@ var GFX = (function () {
   Node.prototype.setPos = function (x, y, z) { this.x = x; this.y = y; this.z = z; return this; };
   Node.prototype.worldPos = function () { return [this.world[12], this.world[13], this.world[14]]; };
 
-  var root, vmRoot, camera = { x: 0, y: 1.6, z: 0, yaw: 0, pitch: 0, roll: 0, fov: 82, near: 0.05, far: 120 };
+  var root, vmRoot, camera = { x: 0, y: 1.6, z: 0, yaw: 0, pitch: 0, roll: 0, fov: 90, near: 0.05, far: 120 };
 
   // ------------------------------------------------------------ texturas
   function makeTex(img, repeat, mip) {
@@ -299,7 +299,10 @@ var GFX = (function () {
     frame.camRot.set(cw); frame.camRot[12] = frame.camRot[13] = frame.camRot[14] = 0;
     frame.camPos = [camera.x, camera.y, camera.z];
     var view = invRigid(new Float32Array(16), cw);
-    var proj = persp(new Float32Array(16), camera.fov, canvas.width / canvas.height, camera.near, camera.far);
+    // camera.fov es el ángulo HORIZONTAL; se pasa a vertical según la forma de la pantalla
+    var aspect = canvas.width / canvas.height;
+    var vfov = function (h) { return 2 * Math.atan(Math.tan(h * Math.PI / 360) / aspect) * 180 / Math.PI; };
+    var proj = persp(new Float32Array(16), vfov(camera.fov), aspect, camera.near, camera.far);
     mul(frame.vp, proj, view);
     gl.useProgram(prog);
     gl.uniformMatrix4fv(U.u_vp, false, frame.vp);
@@ -324,7 +327,7 @@ var GFX = (function () {
     transList.forEach(function (it) { setBlend(it.n.blend); drawItem(it); });
     // arma en primera persona: encima de todo
     gl.clear(gl.DEPTH_BUFFER_BIT);
-    var proj2 = persp(new Float32Array(16), 70, canvas.width / canvas.height, 0.01, 10);
+    var proj2 = persp(new Float32Array(16), 66, aspect, 0.01, 10);
     var vp2 = mul(new Float32Array(16), proj2, view);
     gl.uniformMatrix4fv(U.u_vp, false, vp2);
     setBlend(0);
